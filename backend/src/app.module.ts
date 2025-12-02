@@ -1,39 +1,36 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
 @Module({
-imports: [
-    // --- Configuración de la Conexión a PostgreSQL ---
+  imports: [
+    // Cargar variables de entorno desde .env
+    ConfigModule.forRoot({
+      isGlobal: true,
+      // envFilePath: '.env', // opcional, por defecto ya usa .env en la raíz
+    }),
+
+    // Conexión a PostgreSQL (Supabase)
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',              // ⚠️ Tu servidor
-      port: 5432,                     // ⚠️ Tu puerto
-      username: 'nombre_de_usuario',  // ⚠️ Tu usuario de Postgres
-      password: 'tu_contraseña_secreta', // ⚠️ Tu contraseña
-      database: 'nombre_de_la_db',    // ⚠️ Nombre de la BD que creaste
+      host: process.env.DB_HOST as string,
+      port: parseInt(process.env.DB_PORT as string, 10),
+      username: process.env.DB_USER as string,
+      password: process.env.DB_PASSWORD as string,
+      database: process.env.DB_NAME as string,
 
-      // Busca todas las entidades (.entity.ts) en el proyecto
-      entities: [__dirname + '/**/*.entity{.ts,.js}'], 
-      
-      logging: true, 
-      synchronize: false, // Debe ser 'false' en producción
+      autoLoadEntities: true,
+      synchronize: true, // SOLO en desarrollo
+
+      // Necesario para Supabase (equivalente a "Require" en DataGrip)
+      ssl: {
+        rejectUnauthorized: false,
+      },
     }),
-    
-    // --- Módulos de la Aplicación ---
-    UsersModule, 
-    // Aquí irán RestaurantsModule, ReviewsModule, etc.
   ],
-
-
-
-
-
-
-
-
-
-
-
   controllers: [AppController],
   providers: [AppService],
 })
